@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Polla Mundialista 2026</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@700;900&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Montserrat', sans-serif; }
+    input[type=number]::-webkit-inner-spin-button, 
+    input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+    .scrollbar-hide::-webkit-scrollbar { display: none; }
+    .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    .highlight-row { animation: flashBg 0.5s ease-out; }
+    @keyframes flashBg { 0% { background-color: rgba(255,255,255,0.2); } 100% { background-color: transparent; } }
+    .input-bloqueado { opacity: 0.5; cursor: not-allowed; background-color: #1a1a1a !important; border-color: #333 !important; }
+    .brillo-pleno { position: relative; overflow: hidden; border-color: #ffcc00 !important; box-shadow: 0 0 20px rgba(255, 204, 0, 0.4) !important; }
+    .brillo-pleno::after { content: ''; position: absolute; top: -150%; left: -150%; width: 400%; height: 400%; background: linear-gradient( 45deg, transparent 45%, rgba(255, 255, 255, 0.1) 50%, transparent 55% ); animation: brilloSweeper 3s infinite; }
+    @keyframes brilloSweeper { 0% { transform: translate(-30%, -30%); } 100% { transform: translate(30%, 30%); } }
+    .fade-update { animation: fadeUpdate 0.5s ease-in-out; }
+    @keyframes fadeUpdate { 0% { opacity: 0.3; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+  </style>
+</head>
+<body class="bg-black text-white min-h-screen flex flex-col items-center">
+
+  <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-3 pointer-events-none"></div>
+
+  <div id="loginCard" class="my-auto bg-[#0a0a0a] border-2 border-white/10 p-8 rounded-3xl w-full max-w-md shadow-2xl transition-all p-4">
+    <div class="text-center mb-10 flex flex-col items-center">
+      <img src="https://santi11calderon-hue.github.io/Videos-fotos/MundialLogo.jpg" alt="FIFA 26 Logo" class="h-32 object-cover mb-4 rounded-xl" style="clip-path: inset(0% 12%);">
+      <h1 class="text-3xl font-black text-white tracking-widest uppercase" id="tituloCardLogin">POLLA 2026</h1>
+    </div>
+
+    <div id="loginForm" class="space-y-6">
+      <div>
+        <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">Username</label>
+        <input type="text" id="username" autocomplete="off" class="w-full bg-black border-2 border-[#222] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white transition-colors uppercase font-bold text-center">
+      </div>
+      <div>
+        <label class="block text-xs font-black uppercase tracking-widest text-gray-500 mb-2">PIN / Password</label>
+        <input type="password" id="clave" class="w-full bg-black border-2 border-[#222] rounded-xl px-4 py-3 text-white focus:outline-none focus:border-white transition-colors text-center font-bold tracking-widest">
+      </div>
+      <button type="button" id="btnIngresar" class="w-full bg-white hover:bg-gray-200 text-black font-black py-4 px-4 rounded-xl transition-all uppercase tracking-widest mt-4 cursor-pointer shadow-lg">Acceder</button>
+      
+      <div class="text-center mt-6 border-t border-white/10 pt-4">
+        <button type="button" id="btnCambiarModo" class="text-xs text-gray-400 hover:text-white uppercase tracking-widest font-bold transition-all cursor-pointer">
+          ¿No tienes cuenta? <span class="text-[#00ff44]">Regístrate aquí</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <div id="dashboardContainer" class="hidden w-full max-w-5xl py-4 transition-all p-4">
+    
+    <div class="flex flex-col md:flex-row justify-between items-center bg-[#0a0a0a] border-2 border-white/10 p-5 rounded-2xl mb-6 shadow-xl">
+      <div class="flex items-center gap-4 mb-4 md:mb-0">
+        <img src="https://santi11calderon-hue.github.io/Videos-fotos/MundialLogo.jpg" alt="Logo 2026" class="h-16 object-cover rounded-lg" style="clip-path: inset(0% 12%);">
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-widest">Bienvenido</p>
+          <h2 class="text-2xl text-white font-black tracking-wide uppercase" id="userConectado"></h2>
+        </div>
+      </div>
+      <button type="button" id="btnCerrarSesion" class="bg-[#ff004d] hover:bg-[#cc003d] text-white text-sm font-bold py-3 px-8 rounded-full transition-all uppercase tracking-widest cursor-pointer">Cerrar Sesión</button>
+    </div>
+
+    <div class="sticky top-0 z-40 bg-black pt-4 pb-2 border-b-2 border-white/10 mb-6 shadow-2xl">
+      <div class="flex space-x-2 md:space-x-6 overflow-x-auto scrollbar-hide mb-4">
+        <button type="button" id="tabPartidos" class="text-xs md:text-sm font-black uppercase tracking-widest border-b-4 border-white text-white pb-2 px-2 transition-all cursor-pointer whitespace-nowrap">Fase de Grupos</button>
+        <button type="button" id="tabLlaves" class="text-xs md:text-sm font-black uppercase tracking-widest text-gray-500 border-b-4 border-transparent hover:text-white pb-2 px-2 transition-all cursor-pointer whitespace-nowrap">Fase Final 🏆</button>
+        <button type="button" id="tabRanking" class="text-xs md:text-sm font-black uppercase tracking-widest text-gray-500 border-b-4 border-transparent hover:text-white pb-2 px-2 transition-all cursor-pointer whitespace-nowrap">Ranking</button>
+        <button type="button" id="tabAdmin" class="hidden text-xs md:text-sm font-black uppercase tracking-widest text-[#ffcc00] border-b-4 border-transparent hover:text-white pb-2 px-2 transition-all cursor-pointer whitespace-nowrap">👑 Panel Admin</button>
+        <div class="flex-grow"></div>
+        <button type="button" onclick="sincronizarTablero(true)" class="text-xs md:text-sm font-black uppercase tracking-widest text-gray-500 hover:text-white pb-2 px-2 transition-all cursor-pointer whitespace-nowrap flex items-center gap-2">
+          <svg id="iconoRefresh" class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path></svg> Actualizar
+        </button>
+      </div>
+
+      <div id="filtrosGrupos" class="flex gap-2 overflow-x-auto scrollbar-hide pb-2"></div>
+      <div id="filtrosLlaves" class="hidden gap-2 overflow-x-auto scrollbar-hide pb-2">
+        <button data-fase="16AVOS" class="btn-filtro-llave ring-2 ring-white bg-white text-black font-black px-5 py-2 rounded-full text-xs uppercase tracking-widest whitespace-nowrap transition-all shadow-lg cursor-pointer">16avos</button>
+        <button data-fase="OCTAVOS" class="btn-filtro-llave opacity-50 bg-[#0a0a0a] text-white font-black px-4 py-2 rounded-full text-xs uppercase tracking-widest whitespace-nowrap transition-all border border-white/20 cursor-pointer">Octavos</button>
+        <button data-fase="CUARTOS" class="btn-filtro-llave opacity-50 bg-[#0a0a0a] text-white font-black px-4 py-2 rounded-full text-xs uppercase tracking-widest whitespace-nowrap transition-all border border-white/20 cursor-pointer">Cuartos</button>
+        <button data-fase="SEMIFINAL" class="btn-filtro-llave opacity-50 bg-[#0a0a0a] text-white font-black px-4 py-2 rounded-full text-xs uppercase tracking-widest whitespace-nowrap transition-all border border-white/20 cursor-pointer">Semis</button>
+        <button data-fase="TERCER" class="btn-filtro-llave opacity-50 bg-[#0a0a0a] text-white font-black px-4 py-2 rounded-full text-xs uppercase tracking-widest whitespace-nowrap transition-all border border-white/20 cursor-pointer">3er Puesto</button>
+        <button data-fase="FINAL" class="btn-filtro-llave opacity-50 bg-gradient-to-r from-[#ff004d] to-[#0044ff] text-white font-black px-5 py-2 rounded-full text-xs uppercase tracking-widest whitespace-nowrap transition-all border border-white/20 shadow-[0_0_15px_rgba(255,0,77,0.3)] cursor-pointer">🏆 Final</button>
+      </div>
+    </div>
+
+    <div id="tablaPosicionesContenedor" class="hidden w-full bg-[#0a0a0a] border-2 border-white/10 rounded-2xl overflow-hidden shadow-2xl mb-8 transition-all">
+      <div class="bg-white/5 border-b border-white/10 p-3 flex justify-between items-center">
+        <h4 id="tituloTablaGrupo" class="text-sm md:text-base font-black uppercase tracking-widest text-[#00ff44]"></h4>
+        <span class="text-[10px] text-gray-400 uppercase tracking-widest">En Vivo</span>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse text-xs md:text-sm">
+          <thead>
+            <tr class="border-b border-white/10 text-gray-500 uppercase tracking-wider bg-black">
+              <th class="p-2 md:p-3 text-center">#</th>
+              <th class="p-2 md:p-3">Equipo</th>
+              <th class="p-2 md:p-3 text-center" title="Partidos Jugados">PJ</th>
+              <th class="p-2 md:p-3 text-center hidden md:table-cell" title="Goles a Favor">GF</th>
+              <th class="p-2 md:p-3 text-center hidden md:table-cell" title="Goles en Contra">GC</th>
+              <th class="p-2 md:p-3 text-center" title="Diferencia de Gol">DG</th>
+              <th class="p-2 md:p-3 text-center text-white font-black">PTS</th>
+            </tr>
+          </thead>
+          <tbody id="tablaPosicionesBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="vistaPartidos" class="block"><div id="contenedorPartidos" class="grid grid-cols-1 md:grid-cols-2 gap-6 pb-20"></div></div>
+
+    <div id="vistaRanking" class="hidden">
+      <div class="bg-[#0a0a0a] border-2 border-white/10 rounded-2xl overflow-hidden shadow-2xl pb-20">
+        <div class="p-5 bg-white/5 border-b border-white/10"><h4 class="text-xl font-black uppercase tracking-widest text-center md:text-left">Clasificación en Vivo</h4></div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-left border-collapse min-w-[500px]">
+            <thead>
+              <tr class="border-b border-white/10 text-gray-400 text-xs uppercase tracking-wider bg-black">
+                <th class="p-4 text-center w-16">Pos</th>
+                <th class="p-4">Usuario</th>
+                <th class="p-4 text-center">Pts Total</th>
+                <th class="p-4 text-center hidden md:table-cell">Plenos (5)</th>
+                <th class="p-4 text-center hidden md:table-cell">Tendencia (3)</th>
+              </tr>
+            </thead>
+            <tbody id="tablaRankingBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div id="vistaAdmin" class="hidden pb-20">
+      <div class="bg-white/5 border border-white/10 rounded-2xl p-4 mb-6 flex flex-col md:flex-row justify-around items-center text-center gap-4 shadow-lg">
+        <div><p class="text-xs text-gray-500 uppercase tracking-widest">Usuarios</p><h3 class="text-3xl font-black text-[#00ff44]" id="adminTotalUsuarios">0</h3></div>
+        <div><p class="text-xs text-gray-500 uppercase tracking-widest">Líder Actual</p><h3 class="text-3xl font-black text-[#ffcc00] uppercase" id="adminLiderActual">-</h3></div>
+      </div>
+
+      <div class="bg-gradient-to-r from-[#ffcc00]/20 to-black border-2 border-[#ffcc00] rounded-2xl p-6 mb-8 text-center shadow-[0_0_20px_rgba(255,204,0,0.2)]">
+        <h3 class="text-xl font-black uppercase tracking-widest text-[#ffcc00] mb-2">Herramienta del Organizador</h3>
+        <p class="text-sm text-gray-300 mb-6">Al oprimir este botón, la Base de Datos leerá las posiciones matemáticas calculadas por la App y las guardará oficialmente para habilitar las predicciones de las siguientes fases.</p>
+        <button id="btnSincronizarHojas" onclick="enviarLlavesAlBackend()" class="bg-[#ffcc00] hover:bg-yellow-400 text-black font-black py-4 px-8 rounded-xl transition-all uppercase tracking-widest cursor-pointer shadow-lg">
+          Sincronizar Clasificados Oficiales
+        </button>
+      </div>
+
+      <div class="bg-white/5 border-b border-white/10 p-3 flex justify-between items-center rounded-t-2xl"><h4 class="text-sm font-black uppercase tracking-widest text-white">Cargar Resultados Reales</h4></div>
+      <div class="overflow-x-auto bg-[#0a0a0a] border-2 border-white/10 rounded-b-2xl">
+        <table class="w-full text-left border-collapse text-xs md:text-sm">
+          <thead>
+            <tr class="border-b border-white/10 text-gray-400 bg-black uppercase tracking-wider">
+              <th class="p-3 text-center">ID</th>
+              <th class="p-3">Partido</th>
+              <th class="p-3 text-center">Goles</th>
+              <th class="p-3 text-center">Estado</th>
+              <th class="p-3 text-center">Acción</th>
+            </tr>
+          </thead>
+          <tbody id="tablaAdminBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    // 🔗 LA LLAVE MAESTRA:
+    const URL_BACKEND = "https://literate-telegram-pjq59xxv7xvjc6r7-8000.app.github.dev"; 
+    
+    let grupoActual = 'TODOS'; 
+    let pestanaActual = 'partidos'; 
+    let esUsuarioAdmin = false;
+    let esModoRegistro = false; 
+
+    const swalDark = Swal.mixin({ background: '#0a0a0a', color: '#ffffff', confirmButtonColor: '#ffffff', customClass: { confirmButton: 'text-black font-bold uppercase px-6 py-2 rounded-xl' } });
+
+    document.addEventListener("DOMContentLoaded", function() {
+      document.getElementById('btnIngresar').addEventListener('click', procesarFormulario);
+      document.getElementById('btnCambiarModo').addEventListener('click', toggleModoAuth);
+      document.getElementById('btnCerrarSesion').addEventListener('click', cerrarSesion);
+      document.getElementById('tabPartidos').addEventListener('click', function() { cambiarPestana('partidos'); });
+      document.getElementById('tabLlaves').addEventListener('click', function() { cambiarPestana('llaves'); });
+      document.getElementById('tabRanking').addEventListener('click', function() { cambiarPestana('ranking'); });
+      document.getElementById('tabAdmin').addEventListener('click', function() { cambiarPestana('admin'); });
+
+      document.getElementById('clave').addEventListener('keypress', function (e) {
+        if (e.key === 'Enter') procesarFormulario();
+      });
+
+      document.querySelectorAll('.btn-filtro-llave').forEach(function(btn) {
+        btn.addEventListener('click', function() { filtrarLlaves(this.getAttribute('data-fase'), this); });
+      });
+
+      try {
+        const u = localStorage.getItem('polla_user');
+        const a = localStorage.getItem('polla_is_admin');
+        if (u) {
+          esUsuarioAdmin = (a === 'true');
+          mostrarDashboard(u);
+        }
+      } catch (e) {}
+    });
+
+    // 📋 DICCIONARIO COMPLETO DE LAS 48 BANDERAS DEL MUNDIAL 2026
+    const banderas = {
+      "México": "mx", "Sudáfrica": "za", "Corea del Sur": "kr", "República Checa": "cz",
+      "Canadá": "ca", "Bosnia y Herzegovina": "ba", "Qatar": "qa", "Suiza": "ch",
+      "Brasil": "br", "Marruecos": "ma", "Haití": "ht", "Escocia": "gb-sct",
+      "USA": "us", "Paraguay": "py", "Australia": "au", "Turquía": "tr",
+      "Alemania": "de", "Curazao": "cw", "Costa de Marfil": "ci", "Ecuador": "ec",
+      "Países Bajos": "nl", "Japón": "jp", "Suecia": "se", "Túnez": "tn",
+      "Bélgica": "be", "Egipto": "eg", "Irán": "ir", "Nueva Zelanda": "nz",
+      "España": "es", "Cabo Verde": "cv", "Arabia Saudita": "sa", "Uruguay": "uy",
+      "Francia": "fr", "Senegal": "sn", "Irak": "iq", "Noruega": "no",
+      "Argentina": "ar", "Argelia": "dz", "Austria": "at", "Jordania": "jo",
+      "Portugal": "pt", "RD Congo": "cd", "Uzbekistán": "uz", "Colombia": "co",
+      "Inglaterra": "gb-eng", "Croacia": "hr", "Ghana": "gh", "Panamá": "pa"
+    };
+
+    function getFlagUrl(equipo) {
+      if(!equipo) return 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/2026_FIFA_World_Cup_logo.svg/40px-2026_FIFA_World_Cup_logo.svg.png';
+      const normalizado = equipo.trim().toLowerCase();
+      for (const nombre in banderas) {
+        if (nombre.toLowerCase() === normalizado) return 'https://flagcdn.com/w40/' + banderas[nombre] + '.png';
+      }
+      return 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1d/2026_FIFA_World_Cup_logo.svg/40px-2026_FIFA_World_Cup_logo.svg.png';
+    }
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `pointer-events-auto flex items-center gap-3 bg-[#0a0a0a] border-2 border-white/10 px-6 py-4 rounded-2xl shadow-2xl text-white font-bold uppercase tracking-widest text-xs transform translate-y-10 opacity-0 transition-all duration-500 ease-out`;
+      if (type === 'success') { toast.innerHTML = `<span class="text-[#00ff44]">✔</span> ${message}`; } 
+      else { toast.innerHTML = `<span class="text-[#ff004d]">✘</span> ${message}`; toast.classList.add('border-[#ff004d]/50'); }
+      container.appendChild(toast);
+      requestAnimationFrame(() => { toast.classList.remove('translate-y-10', 'opacity-0'); });
+      setTimeout(() => { toast.classList.add('translate-y-10', 'opacity-0'); toast.addEventListener('transitionend', () => toast.remove()); }, 2500);
+    }
+
+    function verificarBloqueoTiempo(fecha, hora) {
+      if(!fecha || !hora || hora === 'TBD' || hora === '') return false;
+      try {
+        let fStr = fecha;
+        if(fStr.indexOf('/') > -1) { let partes = fStr.split('/'); fStr = partes[2] + '-' + partes[1] + '-' + partes[0]; }
+        let diffMinutos = Math.floor((new Date(fStr + 'T' + hora + ':00') - new Date()) / 60000);
+        return diffMinutos <= 30; 
+      } catch (e) { return false; }
+    }
+
+    function cambiarPestana(tipo) {
+      pestanaActual = tipo; 
+      ['vistaPartidos', 'vistaRanking', 'vistaAdmin', 'tablaPosicionesContenedor', 'filtrosGrupos', 'filtrosLlaves'].forEach(id => document.getElementById(id).classList.add('hidden'));
+      ['filtrosGrupos', 'filtrosLlaves'].forEach(id => document.getElementById(id).classList.remove('flex'));
+      ['tabPartidos', 'tabLlaves', 'tabRanking', 'tabAdmin'].forEach(id => {
+        const btn = document.getElementById(id);
+        if(btn) { btn.classList.remove('border-white', 'text-white', 'border-[#ffcc00]'); btn.classList.add('border-transparent', 'text-gray-500'); }
+      });
+      if(tipo === 'partidos') {
+        document.getElementById('tabPartidos').classList.add('border-white', 'text-white');
+        document.getElementById('filtrosGrupos').classList.replace('hidden', 'flex');
+        document.getElementById('vistaPartidos').classList.remove('hidden');
+        const btnTodos = document.querySelector('.btn-filtro-grupo[data-fase="TODOS"]'); if(btnTodos) btnTodos.click();
+      } else if(tipo === 'llaves') {
+        document.getElementById('tabLlaves').classList.add('border-white', 'text-white');
+        document.getElementById('filtrosLlaves').classList.replace('hidden', 'flex');
+        document.getElementById('vistaPartidos').classList.remove('hidden');
+        const btn16 = document.querySelector('.btn-filtro-llave[data-fase="16AVOS"]'); if(btn16) btn16.click();
+      } else if(tipo === 'ranking') {
+        document.getElementById('tabRanking').classList.add('border-white', 'text-white');
+        document.getElementById('vistaRanking').classList.remove('hidden');
+      } else if(tipo === 'admin') {
+        document.getElementById('tabAdmin').classList.add('border-[#ffcc00]', 'text-white');
+        document.getElementById('vistaAdmin').classList.remove('hidden');
+      }
+    }
+
+    function generarFiltrosGrupos() {
+      let html = '<button data-fase="TODOS" class="btn-filtro-grupo opacity-100 ring-2 ring-white bg-white text-black font-black px-5 py-2 rounded-full text-xs uppercase tracking-widest whitespace-nowrap transition-all shadow-lg cursor-pointer">TODOS</button>';
+      ['A','B','C','D','E','F','G','H','I','J','K','L'].forEach(g => {
+        html += `<button data-fase="GRUPO ${g}" class="btn-filtro-grupo opacity-50 hover:opacity-100 bg-[#0a0a0a] text-white font-black px-4 py-2 rounded-full text-xs uppercase tracking-widest whitespace-nowrap transition-all border border-white/20 cursor-pointer">GRUPO ${g}</button>`;
+      });
+      document.getElementById('filtrosGrupos').innerHTML = html;
+      document.querySelectorAll('.btn-filtro-grupo').forEach(btn => { btn.addEventListener('click', function() { filtrarGrupos(this.getAttribute('data-fase'), this); }); });
+    }
+
+    function filtrarGrupos(fase, btn) {
+      grupoActual = fase;
+      document.querySelectorAll('.btn-filtro-grupo').forEach(b => { b.className = 'btn-filtro-grupo opacity-50 hover:opacity-100 bg-[#0a0a0a] text-white font-black px-4 py-2 rounded-full text-xs uppercase tracking-widest whitespace-nowrap transition-all border border-white/20 cursor-pointer'; });
+      btn.className = 'btn-filtro-grupo opacity-100 ring-2 ring-white bg-white text-black font-black px-5 py-2 rounded-full text-xs uppercase tracking-widest whitespace-nowrap transition-all shadow-lg cursor-pointer';
+      
+      document.querySelectorAll('.tarjeta-partido').forEach(t => {
+        const pFase = t.getAttribute('data-fase');
+        t.style.display = (fase === 'TODOS' && pFase.indexOf('GRUPO') > -1) || (pFase === fase.trim()) ? 'block' : 'none';
+      });
+      if(fase.indexOf('GRUPO') > -1 && fase !== 'TODOS') generarTablaMatematica(fase);
+      else document.getElementById('tablaPosicionesContenedor').classList.add('hidden');
+    }
+
+    // 🔥 FIJACIÓN DEL FILTRO DE LAS ELIMINATORIAS (ELIMINA EL BUG DE LA SUBSTR) 🔥
+    function filtrarLlaves(fase, btn) {
+      grupoActual = fase;
+      document.querySelectorAll('.btn-filtro-llave').forEach(b => { 
+        b.className = 'btn-filtro-llave opacity-50 bg-[#0a0a0a] text-white font-black px-4 py-2 rounded-full text-xs uppercase tracking-widest whitespace-nowrap transition-all border border-white/20 cursor-pointer';
+        if(b.innerText.indexOf('Final') > -1 && b.innerText.indexOf('3er') === -1) b.classList.add('bg-gradient-to-r', 'from-[#ff004d]', 'to-[#0044ff]');
+      });
+      btn.classList.replace('opacity-50', 'opacity-100'); btn.classList.replace('bg-[#0a0a0a]', 'bg-white'); btn.classList.replace('text-white', 'text-black'); btn.classList.add('ring-2', 'ring-white');
+      
+      document.querySelectorAll('.tarjeta-partido').forEach(t => {
+        const pFase = t.getAttribute('data-fase').trim().toUpperCase();
+        
+        // Si buscamos la 'FINAL', exigimos igualdad estricta para que no se filtre 16avos de final
+        if (fase === 'FINAL') {
+          t.style.display = (pFase === 'FINAL' || pFase === 'GRAN FINAL') ? 'block' : 'none';
+        } else {
+          t.style.display = (pFase.indexOf(fase) > -1) ? 'block' : 'none';
+        }
+      });
+    }
+
+    function procesarGrupoInterno(faseSola) {
+      let eqData = {};
+      document.querySelectorAll(`.tarjeta-partido[data-fase="GRUPO ${faseSola}"]`).forEach(t => {
+        const eA = t.getAttribute('data-eqa').trim(), eB = t.getAttribute('data-eqb').trim();
+        if(!eqData[eA]) eqData[eA] = { pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, df:0, pts:0 };
+        if(!eqData[eB]) eqData[eB] = { pj:0, pg:0, pe:0, pp:0, gf:0, gc:0, df:0, pts:0 };
+        const i = t.querySelectorAll('.input-gol');
+        if(i.length === 2 && i[0].value !== '' && i[1].value !== '') {
+          const gA = parseInt(i[0].value,10), gB = parseInt(i[1].value,10);
+          if(!isNaN(gA) && !isNaN(gB)) {
+            eqData[eA].pj++; eqData[eB].pj++; eqData[eA].gf += gA; eqData[eB].gf += gB; eqData[eA].gc += gB; eqData[eB].gc += gA;
+            eqData[eA].df = eqData[eA].gf - eqData[eA].gc; eqData[eB].df = eqData[eB].gf - eqData[eB].gc;
+            if(gA > gB) eqData[eA].pts += 3; else if(gB > gA) eqData[eB].pts += 3; else { eqData[eA].pts++; eqData[eB].pts++; }
+          }
+        }
+      });
+      let arr = []; for(let e in eqData) arr.push({ nombre: e, stats: eqData[e] });
+      return arr.sort((a, b) => b.stats.pts - a.stats.pts || b.stats.df - a.stats.df || b.stats.gf - a.stats.gf);
+    }
+
+    function calcularClasificadosGlobales() {
+      const mapaClas = {}; let terceros = [];
+      ['A','B','C','D','E','F','G','H','I','J','K','L'].forEach(g => {
+        const r = procesarGrupoInterno(g);
+        if(r.length > 0) {
+          if(r[0]) mapaClas[`1${g}`] = r[0].nombre;
+          if(r[1]) mapaClas[`2${g}`] = r[1].nombre;
+          if(r[2]) terceros.push({ nombre: r[2].nombre, stats: r[2].stats });
+        }
+      });
+      terceros.sort((a, b) => b.stats.pts - a.stats.pts || b.stats.df - a.stats.df || b.stats.gf - a.stats.gf);
+      for(let i=0; i<8; i++) if(terceros[i]) mapaClas[`M3-${i+1}`] = terceros[i].nombre;
+
+      document.querySelectorAll('.tarjeta-partido:not([data-fase*="GRUPO"])').forEach(t => {
+        const eAO = t.getAttribute('data-eqa').trim().toUpperCase(), eBO = t.getAttribute('data-eqb').trim().toUpperCase();
+        const spans = t.querySelectorAll('.nombre-equipo'), imgs = t.querySelectorAll('.bandera-equipo');
+        if(spans.length >= 2 && imgs.length >= 2) {
+          if(mapaClas[eAO]) { if(spans[0].innerText !== mapaClas[eAO]) { spans[0].innerText = mapaClas[eAO]; imgs[0].src = getFlagUrl(mapaClas[eAO]); imgs[0].style.display='block'; spans[0].classList.add('fade-update'); setTimeout(()=>spans[0].classList.remove('fade-update'),500); } }
+          else if(eAO.length <= 4 && (eAO.startsWith('1')||eAO.startsWith('2')||eAO.startsWith('M'))) { if(spans[0].innerText !== eAO) { spans[0].innerText = eAO; imgs[0].style.display='none'; } }
+          if(mapaClas[eBO]) { if(spans[1].innerText !== mapaClas[eBO]) { spans[1].innerText = mapaClas[eBO]; imgs[1].src = getFlagUrl(mapaClas[eBO]); imgs[1].style.display='block'; spans[1].classList.add('fade-update'); setTimeout(()=>spans[1].classList.remove('fade-update'),500); } }
+          else if(eBO.length <= 4 && (eBO.startsWith('1')||eBO.startsWith('2')||eBO.startsWith('M'))) { if(spans[1].innerText !== eBO) { spans[1].innerText = eBO; imgs[1].style.display='none'; } }
+        }
+      });
+    }
+
+    function actualizarFaseFinal() {
+      for(let iteracion = 0; iteracion < 4; iteracion++) {
+        const tarjetas = document.querySelectorAll('.tarjeta-partido'); let pData = {}; 
+        tarjetas.forEach(t => {
+          const id = t.getAttribute('data-id'), spans = t.querySelectorAll('.nombre-equipo'), iG = t.querySelectorAll('.input-gol'), iP = t.querySelectorAll('.input-penal');
+          if(spans.length >= 2 && iG.length === 2) {
+             const eA = spans[0].innerText.trim(), eB = spans[1].innerText.trim(), vA = iG[0].value.trim(), vB = iG[1].value.trim();
+             let gan = null, per = null;
+             if(vA !== '' && vB !== '') {
+               const gA = parseInt(vA,10), gB = parseInt(vB,10);
+               if(gA > gB) { gan = eA; per = eB; } else if(gB > gA) { gan = eB; per = eA; }
+               else if(gA === gB && iP.length === 2) { 
+                  const pA = parseInt(iP[0].value,10), pB = parseInt(iP[1].value,10);
+                  if(!isNaN(pA) && !isNaN(pB) && pA !== pB) { if(pA > pB){ gan=eA; per=eB; } else { gan=eB; per=eA; } }
+               }
+             }
+             pData[id] = { gan, per };
+          }
+        });
+        const rLlave = /^([GP])(?:ANADOR|ERDEDOR)?\s*(\d+)$/i;
+        tarjetas.forEach(t => {
+          const eAO = t.getAttribute('data-eqa').trim().toUpperCase(), eBO = t.getAttribute('data-eqb').trim().toUpperCase();
+          const spans = t.querySelectorAll('.nombre-equipo'), imgs = t.querySelectorAll('.bandera-equipo');
+          if(spans.length >= 2 && imgs.length >= 2) {
+            const rL = (c) => { let m = c.match(rLlave); if(m) { let tp = m[1].toUpperCase(), mId = m[2]; if(tp==='G') return pData[mId]?pData[mId].gan:null; if(tp==='P') return pData[mId]?pData[mId].per:null; } return null; };
+            if(rLlave.test(eAO)) { let rA = rL(eAO); if(rA) { if(spans[0].innerText !== rA) { spans[0].innerText = rA; imgs[0].src = getFlagUrl(rA); imgs[0].style.display='block'; spans[0].classList.add('fade-update'); setTimeout(()=>spans[0].classList.remove('fade-update'),500); } } else { if(spans[0].innerText !== eAO) { spans[0].innerText = eAO; imgs[0].style.display='none'; } } }
+            if(rLlave.test(eBO)) { let rB = rL(eBO); if(rB) { if(spans[1].innerText !== rB) { spans[1].innerText = rB; imgs[1].src = getFlagUrl(rB); imgs[1].style.display='block'; spans[1].classList.add('fade-update'); setTimeout(()=>spans[1].classList.remove('fade-update'),500); } } else { if(spans[1].innerText !== eBO) { spans[1].innerText = eBO; imgs[1].style.display='none'; } } }
+          }
+        });
+      }
+    }
+
+    function auditarLlavesReales() {
+      document.querySelectorAll('.tarjeta-partido:not([data-fase*="GRUPO"])').forEach(t => {
+        const realA = t.getAttribute('data-reala').trim().toUpperCase();
+        const realB = t.getAttribute('data-realb').trim().toUpperCase();
+
+        if (realA !== "" && realB !== "") {
+          const spans = t.querySelectorAll('.nombre-equipo');
+          if (spans.length >= 2) {
+            const userA = spans[0].innerText.split('\n')[0].trim().toUpperCase();
+            const userB = spans[1].innerText.split('\n')[0].trim().toUpperCase();
+
+            if (realA !== userA || realB !== userB) {
+              t.classList.add('opacity-40', 'grayscale');
+              t.querySelectorAll('input').forEach(inp => { inp.disabled = true; inp.classList.add('input-bloqueado'); });
+              const btn = t.querySelector('.btn-guardar-pred');
+              if (btn) btn.outerHTML = '<div class="w-full text-center py-3 bg-black border-2 border-[#ff004d]/50 rounded-xl font-black text-[10px] md:text-xs tracking-widest uppercase mt-2 text-[#ff004d]">❌ LLAVE FALLIDA</div>';
+              spans[0].innerHTML = `<span class="line-through text-gray-500 text-[10px] block">${userA}</span><span class="text-[#00ff44] text-xs">${realA}</span>`;
+              spans[1].innerHTML = `<span class="line-through text-gray-500 text-[10px] block">${userB}</span><span class="text-[#00ff44] text-xs">${realB}</span>`;
+              const imgs = t.querySelectorAll('.bandera-equipo');
+              if(imgs.length >= 2) { imgs[0].src = getFlagUrl(realA); imgs[0].style.display = 'block'; imgs[1].src = getFlagUrl(realB); imgs[1].style.display = 'block'; }
+            }
+          }
+        }
+      });
+    }
+
+    function generarTablaMatematica(fase) {
+      document.getElementById('tablaPosicionesContenedor').classList.remove('hidden');
+      let clr = obtenerColorGrupo(fase);
+      document.getElementById('tituloTablaGrupo').innerText = 'POSICIONES ' + fase; document.getElementById('tituloTablaGrupo').style.color = clr;
+      const arr = procesarGrupoInterno(fase.replace('GRUPO ', '').trim());
+      let html = '';
+      arr.forEach((item, idx) => {
+        let pC = idx < 3 ? 'border-l-4 text-white' : 'text-gray-500 opacity-50', bC = idx < 2 ? clr : (idx === 2 ? '#ffcc00' : 'transparent');
+        html += `<tr class="border-b border-white/5 transition-all ${pC}" style="border-left-color: ${bC}">
+          <td class="p-2 md:p-3 text-center font-bold">${idx + 1}</td>
+          <td class="p-2 md:p-3 flex items-center gap-2"><img src="${getFlagUrl(item.nombre)}" class="w-5 h-5 md:w-6 md:h-6 rounded-sm object-cover border border-white/20" onerror="this.style.display='none'">
+          <span class="font-black uppercase truncate max-w-[100px] md:max-w-none">${item.nombre}</span></td>
+          <td class="p-2 md:p-3 text-center">${item.stats.pj}</td>
+          <td class="p-2 md:p-3 text-center hidden md:table-cell">${item.stats.gf}</td>
+          <td class="p-2 md:p-3 text-center hidden md:table-cell">${item.stats.gc}</td>
+          <td class="p-2 md:p-3 text-center">${item.stats.df > 0 ? '+' : ''}${item.stats.df}</td>
+          <td class="p-2 md:p-3 text-center text-white font-black text-sm md:text-base">${item.stats.pts}</td>
+        </tr>`;
+      });
+      const tb = document.getElementById('tablaPosicionesBody'); tb.innerHTML = html; tb.classList.remove('highlight-row'); void tb.offsetWidth; tb.classList.add('highlight-row');
+    }
+
+    function toggleModoAuth() {
+      esModoRegistro = !esModoRegistro;
+      const titulo = document.getElementById('tituloCardLogin');
+      const btn = document.getElementById('btnIngresar');
+      const textToggle = document.getElementById('btnCambiarModo');
+      
+      if (esModoRegistro) {
+        titulo.innerText = "CREAR CUENTA";
+        btn.innerText = "REGISTRARSE";
+        btn.classList.replace('bg-white', 'bg-[#00ff44]');
+        textToggle.innerHTML = '¿Ya tienes cuenta? <span class="text-white">Inicia sesión aquí</span>';
+      } else {
+        titulo.innerText = "POLLA 2026";
+        btn.innerText = "ACCEDER";
+        btn.classList.replace('bg-[#00ff44]', 'bg-white');
+        textToggle.innerHTML = '¿No tienes cuenta? <span class="text-[#00ff44]">Regístrate aquí</span>';
+      }
+    }
+
+    function procesarFormulario() {
+      const u = document.getElementById('username').value.trim(), p = document.getElementById('clave').value.trim(), btn = document.getElementById('btnIngresar');
+      if(u === "" || p === "") return swalDark.fire({ icon: 'warning', title: 'INCOMPLETO', text: 'Por favor, digita tu usuario y contraseña.' });
+      
+      btn.disabled = true; btn.innerText = 'CARGANDO...'; btn.classList.add('animate-pulse');
+      const ruta = esModoRegistro ? '/registro' : '/login';
+
+      fetch(`${URL_BACKEND}${ruta}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username: u, clave: p })
+      })
+      .then(res => res.json())
+      .then(res => {
+          btn.disabled = false; btn.innerText = esModoRegistro ? 'REGISTRARSE' : 'ACCEDER'; btn.classList.remove('animate-pulse');
+          if (res.exito) {
+            if (esModoRegistro) {
+              swalDark.fire('¡Registro Exitoso!', 'Tu cuenta ha sido creada. Ahora puedes iniciar sesión.', 'success');
+              toggleModoAuth();
+              document.getElementById('clave').value = ''; 
+            } else {
+              try { localStorage.setItem('polla_user', res.username); localStorage.setItem('polla_is_admin', res.isAdmin); esUsuarioAdmin = res.isAdmin; } catch(e) {}
+              mostrarDashboard(res.username);
+            }
+          } else {
+            swalDark.fire({ icon: 'error', title: 'ERROR', text: res.detail || res.mensaje });
+          }
+      })
+      .catch(error => {
+          btn.disabled = false; btn.innerText = esModoRegistro ? 'REGISTRARSE' : 'ACCEDER'; btn.classList.remove('animate-pulse');
+          swalDark.fire({ icon: 'error', title: 'ERROR', text: 'Fallo de red al conectar con el servidor.' });
+      });
+    }
+
+    function mostrarDashboard(username) {
+      document.getElementById('loginCard').classList.add('hidden'); 
+      document.getElementById('loginCard').classList.remove('my-auto');
+      document.getElementById('dashboardContainer').classList.remove('hidden'); 
+      document.getElementById('userConectado').innerText = username;
+
+      if (esUsuarioAdmin) {
+        document.getElementById('tabPartidos').classList.add('hidden');
+        document.getElementById('tabLlaves').classList.add('hidden');
+        document.getElementById('tabRanking').classList.remove('hidden'); 
+        document.getElementById('tabAdmin').classList.remove('hidden');
+        cambiarPestana('admin'); 
+      } else {
+        document.getElementById('tabAdmin').classList.add('hidden');
+        document.getElementById('tabPartidos').classList.remove('hidden');
+        document.getElementById('tabLlaves').classList.remove('hidden');
+        document.getElementById('tabRanking').classList.remove('hidden');
+        cambiarPestana('partidos');
+      }
+      sincronizarTablero();
+    }
+
+    function cerrarSesion() {
+      try { localStorage.removeItem('polla_user'); localStorage.removeItem('polla_is_admin'); esUsuarioAdmin = false; } catch(e) {}
+      document.getElementById('dashboardContainer').classList.add('hidden'); document.getElementById('loginCard').classList.remove('hidden'); document.getElementById('loginCard').classList.add('my-auto');
+      document.getElementById('username').value = ''; document.getElementById('clave').value = '';
+    }
+
+    function obtenerColorGrupo(fase) {
+      const f = fase.toUpperCase();
+      if(f.indexOf('A') > -1) return '#00ff44'; if(f.indexOf('B') > -1) return '#ff004d';
+      if(f.indexOf('C') > -1) return '#ff9900'; if(f.indexOf('D') > -1) return '#0044ff';
+      if(f.indexOf('E') > -1) return '#9900ff'; if(f.indexOf('F') > -1) return '#ccff00';
+      if(f.indexOf('G') > -1) return '#ff0099'; if(f.indexOf('H') > -1) return '#00e5ff';
+      if(f.indexOf('I') > -1) return '#b200ff'; if(f.indexOf('J') > -1) return '#0088ff';
+      if(f.indexOf('K') > -1) return '#ff5500'; if(f.indexOf('L') > -1) return '#00aaff';
+      return '#ffffff';
+    }
+
+    function sincronizarTablero(isManual = false) {
+      const icono = document.getElementById('iconoRefresh');
+      if (isManual) { if (icono) icono.classList.add('animate-spin'); } 
+      else { document.getElementById('contenedorPartidos').innerHTML = '<p class="text-white animate-pulse col-span-full text-center font-black uppercase tracking-widest mt-10">Sincronizando con Python...</p>'; }
+
+      generarFiltrosGrupos(); 
+      let uLocal = document.getElementById('userConectado').innerText;
+      
+      fetch(`${URL_BACKEND}/dashboard/${uLocal}`)
+      .then(res => res.json())
+      .then(res => {
+          if (icono) icono.classList.remove('animate-spin');
+          if (!res.exito) return swalDark.fire({ icon: 'error', title: 'ERROR', text: res.detail || 'Error cargando datos' });
+          
+          if (res.isAdmin !== undefined) { esUsuarioAdmin = res.isAdmin; if(esUsuarioAdmin) document.getElementById('tabAdmin').classList.remove('hidden'); }
+          
+          const partidosAdaptados = res.partidos.map(p => ({
+              id: p.id, fecha: p.fecha, hora: p.hora, fase: p.fase, equipoA: p.equipo_a, equipoB: p.equipo_b,
+              golesAReal: p.goles_a_real !== null ? p.goles_a_real : "", golesBReal: p.goles_b_real !== null ? p.goles_b_real : "",
+              estado: p.estado, equipoAReal: p.equipo_a_real || "", equipoBReal: p.equipo_b_real || "",
+              penalesAReal: p.penales_a_real || "", penalesBReal: p.penales_b_real || ""
+          }));
+
+          const prediccionesAdaptadas = {};
+          res.partidos.forEach(p => {
+              if (p.prediccion) {
+                  prediccionesAdaptadas[p.id] = { golesA: p.prediccion.goles_a_pred, golesB: p.prediccion.goles_b_pred, penalesA: p.prediccion.penales_a_pred || "", penalesB: p.prediccion.penales_b_pred || "", puntos: p.prediccion.puntos_ganados || 0 };
+              }
+          });
+
+          renderizarPartidos(partidosAdaptados, prediccionesAdaptadas);
+          renderizarRanking(res.ranking);
+          
+          if(esUsuarioAdmin) { 
+            renderizarAdmin(partidosAdaptados); 
+            if(res.ranking.length > 0) {
+              const elTotal = document.getElementById('adminTotalUsuarios'); const elLider = document.getElementById('adminLiderActual');
+              if(elTotal) elTotal.innerText = res.ranking.length; if(elLider) elLider.innerText = res.ranking[0].username;
+            } else {
+               const elTotal = document.getElementById('adminTotalUsuarios'); const elLider = document.getElementById('adminLiderActual');
+               if(elTotal) elTotal.innerText = '0'; if(elLider) elLider.innerText = '-';
+            }
+          }
+          
+          calcularClasificadosGlobales(); actualizarFaseFinal(); auditarLlavesReales(); cambiarPestana(pestanaActual);
+
+          if (pestanaActual === 'partidos') { const btn = document.querySelector(`.btn-filtro-grupo[data-fase="${grupoActual}"]`); if (btn) btn.click(); } 
+          else if (pestanaActual === 'llaves') { const btn = document.querySelector(`.btn-filtro-llave[data-fase="${grupoActual}"]`); if (btn) btn.click(); }
+
+          if (isManual) showToast('¡Datos actualizados!');
+      })
+      .catch(error => {
+          if (icono) icono.classList.remove('animate-spin');
+          document.getElementById('contenedorPartidos').innerHTML = '<p class="text-[#ff004d] text-center font-black">Error de conexión al servidor.</p>';
+      });
+    }
+
+    function renderizarPartidos(partidos, predicciones) {
+      let html = '';
+      partidos.forEach(p => {
+        const blq = verificarBloqueoTiempo(p.fecha, p.hora);
+        const fin = (p.estado === 'Finalizado');
+        let opc = fin ? 'opacity-50 grayscale' : '';
+        let isDis = (fin || blq) ? 'disabled' : '';
+        let extI = blq ? 'input-bloqueado' : '';
+        const clr = obtenerColorGrupo(p.fase);
+        const pred = predicciones[p.id];
+        const vA = pred ? pred.golesA : '', vB = pred ? pred.golesB : '';
+        const pA = pred ? (pred.penalesA || '') : '', pB = pred ? (pred.penalesB || '') : '';
+        const pts = (pred && fin) ? Number(pred.puntos) : 0;
+        const eFG = p.fase.trim().toUpperCase().indexOf('GRUPO') > -1;
+        const mP = (!eFG && vA !== '' && vB !== '' && vA === vB);
+        let fHtml = '', tExt = '', pHtml = '';
+
+        if (!eFG) pHtml = `<div class="contenedor-penales ${mP ? 'flex' : 'hidden'} justify-center items-center gap-2 mt-2 w-full transition-all duration-300"><span class="text-[10px] text-[#ffcc00] font-black tracking-widest uppercase">Penales</span><input type="number" ${isDis} value="${pA}" class="input-penal ${extI} w-8 h-10 text-center text-sm font-black bg-black border-2 border-[#ffcc00]/50 rounded-lg text-[#ffcc00] focus:outline-none focus:border-[#ffcc00]" min="0"><span class="text-[#ffcc00]/50 font-black">-</span><input type="number" ${isDis} value="${pB}" class="input-penal ${extI} w-8 h-10 text-center text-sm font-black bg-black border-2 border-[#ffcc00]/50 rounded-lg text-[#ffcc00] focus:outline-none focus:border-[#ffcc00]" min="0"></div>`;
+
+        if (fin) {
+          fHtml = `<div class="w-full text-center py-3 bg-white/5 border border-white/10 rounded-xl font-black text-sm tracking-widest uppercase mt-2">Marcador oficial: ${p.golesAReal} - ${p.golesBReal} <span class="block text-xs mt-1 text-lime-400">+${pts} pts</span></div>`;
+          if (pts === 5) { tExt = 'brillo-pleno'; opc = 'opacity-100'; } else if (pts === 3) opc = 'opacity-90';
+        } else if (blq) {
+          fHtml = '<div class="w-full text-center py-3 bg-black border-2 border-red-500/50 rounded-xl font-black text-sm tracking-widest uppercase mt-2 text-red-500 flex justify-center items-center gap-2">🔒 TIEMPO AGOTADO</div>';
+        } else {
+          fHtml = `<button data-id="${p.id}" class="btn-guardar-pred w-full ${pred ? 'bg-transparent border-2 border-white/20 text-white hover:border-white' : 'bg-white text-black hover:bg-gray-200'} font-black py-4 rounded-xl transition-all cursor-pointer uppercase tracking-widest mt-2">${pred ? 'ACTUALIZAR' : 'GUARDAR'}</button>`;
+        }
+
+        html += `<div class="tarjeta-partido bg-[#0a0a0a] border-2 rounded-2xl p-5 transition-all ${opc} ${tExt}" data-fase="${p.fase.trim().toUpperCase()}" data-id="${p.id}" data-eqa="${p.equipoA.trim()}" data-eqb="${p.equipoB.trim()}" data-reala="${p.equipoAReal}" data-realb="${p.equipoBReal}" style="border-color: ${clr}; box-shadow: 0 4px 20px ${clr}20;">
+          <div class="flex justify-between items-center border-b border-white/10 pb-3 mb-5"><span class="text-xs font-black uppercase tracking-widest" style="color: ${clr}; px-3 py-1 bg-white/5 rounded-full">${p.fase}</span><span class="text-[10px] md:text-xs font-bold text-gray-500 uppercase tracking-widest">${p.fecha} • ${p.hora || 'TBD'}</span></div>
+          <div class="flex justify-between items-center mb-6 gap-2">
+            <div class="flex flex-col md:flex-row items-center md:justify-end w-[35%] gap-2 text-center md:text-right"><span class="nombre-equipo text-xs md:text-sm font-black text-white uppercase leading-tight break-words">${p.equipoA}</span><img class="bandera-equipo w-8 md:w-10 h-auto rounded border border-white/20 shadow-sm object-cover" src="${getFlagUrl(p.equipoA)}" onerror="this.style.display='none'"></div>
+            <div class="flex space-x-1 md:space-x-2 w-[30%] justify-center items-center"><input type="number" ${isDis} value="${vA}" class="input-gol ${extI} w-10 h-12 md:w-14 md:h-14 text-center text-xl md:text-2xl font-black bg-black border-2 border-white/20 rounded-xl text-white focus:outline-none focus:border-white" min="0"><span class="text-white/50 font-black">-</span><input type="number" ${isDis} value="${vB}" class="input-gol ${extI} w-10 h-12 md:w-14 md:h-14 text-center text-xl md:text-2xl font-black bg-black border-2 border-white/20 rounded-xl text-white focus:outline-none focus:border-white" min="0"></div>
+            <div class="flex flex-col-reverse md:flex-row items-center md:justify-start w-[35%] gap-2 text-center md:text-left"><img class="bandera-equipo w-8 md:w-10 h-auto rounded border border-white/20 shadow-sm object-cover" src="${getFlagUrl(p.equipoB)}" onerror="this.style.display='none'"><span class="nombre-equipo text-xs md:text-sm font-black text-white uppercase leading-tight break-words">${p.equipoB}</span></div>
+          </div>
+          ${pHtml} ${fHtml}
+        </div>`;
+      });
+      document.getElementById('contenedorPartidos').innerHTML = html; 
+      document.querySelectorAll('.btn-guardar-pred').forEach(btn => btn.addEventListener('click', function() { guardarPrediccion(this.getAttribute('data-id'), this); }));
+      document.querySelectorAll('.input-gol').forEach(inp => {
+        inp.addEventListener('input', function() {
+          if (grupoActual.indexOf('GRUPO') > -1 && grupoActual !== 'TODOS') generarTablaMatematica(grupoActual);
+          const t = this.closest('.tarjeta-partido'); if (t.getAttribute('data-fase').indexOf('GRUPO') === -1) {
+            const iG = t.querySelectorAll('.input-gol'), cP = t.querySelector('.contenedor-penales');
+            if (cP && iG.length === 2) { const gA = iG[0].value.trim(), gB = iG[1].value.trim(); if (gA !== '' && gB !== '' && gA === gB) { cP.classList.replace('hidden', 'flex'); } else { cP.classList.replace('flex', 'hidden'); const iP = t.querySelectorAll('.input-penal'); if(iP.length === 2) { iP[0].value = ''; iP[1].value = ''; } } }
+          }
+          calcularClasificadosGlobales(); actualizarFaseFinal(); auditarLlavesReales();
+        });
+      });
+      document.querySelectorAll('.input-penal').forEach(inp => inp.addEventListener('input', () => { actualizarFaseFinal(); auditarLlavesReales(); }));
+    }
+
+    function renderizarRanking(ranking) {
+      let html = ''; const uL = document.getElementById('userConectado').innerText.toLowerCase();
+      ranking.forEach((u, idx) => {
+        const mio = u.username.toLowerCase() === uL; let p = idx + 1; if(idx === 0) p = '🥇'; if(idx === 1) p = '🥈'; if(idx === 2) p = '🥉';
+        html += `<tr class="${mio ? 'bg-white/10 text-white font-black' : 'border-b border-white/5 text-gray-300 hover:bg-white/5'}"><td class="p-4 text-center text-lg">${p}</td><td class="p-4 uppercase tracking-wider font-bold">${u.username}${mio ? ' <span class="text-[#00ff44] text-xs ml-2">(Tú)</span>' : ''}</td><td class="p-4 text-center text-xl text-[#00ff44] font-black">${u.puntos_total}</td><td class="p-4 text-center text-gray-400 hidden md:table-cell">${u.exactos}</td><td class="p-4 text-center text-gray-400 hidden md:table-cell">${u.tendencia}</td></tr>`;
+      });
+      document.getElementById('tablaRankingBody').innerHTML = html;
+    }
+
+    function guardarPrediccion(id, btn) {
+      const t = btn.closest('.tarjeta-partido'), i = t.querySelectorAll('.input-gol'), pI = t.querySelectorAll('.input-penal'), u = document.getElementById('userConectado').innerText;
+      const gA = i[0].value, gB = i[1].value, eFG = t.getAttribute('data-fase').indexOf('GRUPO') > -1; let pA = null, pB = null;
+      if(gA === "" || gB === "") return swalDark.fire({ icon: 'warning', title: 'INCOMPLETO', text: 'Digita los goles.' });
+      if (!eFG && gA === gB) { 
+          if (pI.length === 2) { 
+              pA = pI[0].value; pB = pI[1].value; 
+              if (pA === "" || pB === "") return swalDark.fire({ icon: 'warning', title: 'PENALES', text: 'Digita el resultado de los penales.' }); 
+              if (pA === pB) return swalDark.fire({ icon: 'warning', title: 'EMPATE', text: 'Los penales no pueden quedar empatados.' }); 
+          } 
+      }
+      btn.disabled = true; btn.innerText = 'GUARDANDO...'; btn.className = "w-full bg-[#222] text-white font-black py-4 rounded-xl transition-all animate-pulse uppercase tracking-widest mt-2";
+      fetch(`${URL_BACKEND}/predicciones/guardar`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ username: u, partido_id: id.toString(), goles_a_pred: parseInt(gA), goles_b_pred: parseInt(gB), penales_a_pred: pA !== null ? parseInt(pA) : null, penales_b_pred: pB !== null ? parseInt(pB) : null }) })
+      .then(res => res.json()).then(res => { if(res.exito) { showToast("¡Predicción guardada!"); setTimeout(()=>sincronizarTablero(), 800); } else { showToast(res.detail || "Error al guardar", 'error'); sincronizarTablero(); } })
+      .catch(error => { showToast('Fallo de red.', 'error'); sincronizarTablero(); });
+    }
+
+    function renderizarAdmin(partidos) {
+      let html = '';
+      partidos.forEach(p => {
+        html += `<tr class="border-b border-white/5 hover:bg-white/5 transition-all"><td class="p-3 text-center text-xs text-gray-500 font-bold">#${p.id}</td><td class="p-3 font-black text-xs md:text-sm uppercase tracking-wider">${p.equipoA} vs ${p.equipoB}</td><td class="p-3 text-center whitespace-nowrap"><input type="number" id="ad_gA_${p.id}" value="${p.golesAReal}" class="w-10 h-8 text-center font-bold bg-black border border-white/20 rounded text-white" min="0"> - <input type="number" id="ad_gB_${p.id}" value="${p.golesBReal}" class="w-10 h-8 text-center font-bold bg-black border border-white/20 rounded text-white" min="0"></td><td class="p-3 text-center"><select id="ad_st_${p.id}" class="bg-black border border-white/20 text-xs font-bold uppercase rounded p-1 text-white"><option value="Pendiente" ${p.estado !== 'Finalizado' ? 'selected' : ''}>Pendiente</option><option value="Finalizado" ${p.estado === 'Finalizado' ? 'selected' : ''}>Finalizado</option></select></td><td class="p-3 text-center"><button onclick="guardarOficial('${p.id}')" class="bg-white text-black font-black text-xs px-3 py-1 rounded hover:bg-gray-200 uppercase tracking-widest">Guardar</button></td></tr>`;
+      });
+      document.getElementById('tablaAdminBody').innerHTML = html;
+    }
+
+    function guardarOficial(id) {
+      const gA = document.getElementById(`ad_gA_${id}`).value, gB = document.getElementById(`ad_gB_${id}`).value, st = document.getElementById(`ad_st_${id}`).value;
+      if(st === 'Finalizado' && (gA === '' || gB === '')) return swalDark.fire({icon: 'error', title: 'ERROR', text: 'Si el partido está finalizado, debes ingresar los goles.'});
+      swalDark.fire({ title: 'Actualizando Oficial...', allowOutsideClick: false, didOpen: () => { Swal.showLoading(); } });
+      fetch(`${URL_BACKEND}/admin/actualizar-resultado`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ partido_id: id.toString(), goles_a_real: gA === '' ? null : parseInt(gA), goles_b_real: gB === '' ? null : parseInt(gB) }) })
+      .then(res => res.json()).then(res => { if(res.exito) { Swal.close(); showToast('Resultado Oficial Actualizado'); sincronizarTablero(); } else { swalDark.fire('Error', res.detail || "Hubo un error", 'error'); } })
+      .catch(error => swalDark.fire('Error', 'Fallo de red.', 'error'));
+    }
+
+    function enviarLlavesAlBackend() {
+      swalDark.fire({ title: '¿Sincronizar Oficialmente?', text: "Esto tomará los clasificados actuales generados matemáticamente y los guardará en la Base de Datos para habilitar las llaves. ¡Asegúrate de que los resultados estén completos!", icon: 'warning', showCancelButton: true, confirmButtonText: 'Sí, Sincronizar', cancelButtonText: 'Cancelar' }).then((result) => {
+        if (result.isConfirmed) {
+          const regexPlaceholder = /(^[12][A-L]$)|(^M3-\d$)|(^[GP](?:ANADOR|ERDEDOR)?\s*\d+$)/i;
+          const actualizaciones = {};
+          
+          document.querySelectorAll('.tarjeta-partido:not([data-fase*="GRUPO"])').forEach(t => {
+            const id = t.getAttribute('data-id'), spans = t.querySelectorAll('.nombre-equipo');
+            if (spans.length >= 2) {
+              const nombreA = spans[0].innerText.trim(), nombreB = spans[1].innerText.trim();
+              let cambioA = !regexPlaceholder.test(nombreA) ? nombreA : null;
+              let cambioB = !regexPlaceholder.test(nombreB) ? nombreB : null;
+              if (cambioA || cambioB) actualizaciones[id] = { eqA: cambioA || t.getAttribute('data-eqa'), eqB: cambioB || t.getAttribute('data-eqb') };
+            }
+          });
+
+          if(Object.keys(actualizaciones).length === 0) return swalDark.fire('Información', 'Todavía no hay llaves resueltas para sincronizar.', 'info');
+          swalDark.fire({ title: 'Sincronizando DB...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+          
+          fetch(`${URL_BACKEND}/admin/sincronizar-llaves`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ llaves: actualizaciones })
+          })
+          .then(res => res.json())
+          .then(res => {
+              if(res.exito) { swalDark.fire('Éxito', res.mensaje, 'success'); sincronizarTablero(); } 
+              else { swalDark.fire('Error', res.detail || "Error interno", 'error'); }
+          })
+          .catch(() => swalDark.fire('Error', 'Fallo de red.', 'error'));
+        }
+      });
+    }
+  </script>
+</body>
+</html>
